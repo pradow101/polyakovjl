@@ -19,7 +19,7 @@ function Ivac(M)
 end
 
 function potential(phi,phib,mu,T,M)
-    (M-m)^2/2G - (T*Nf*Imed(phi,phib,M,mu,T) + 3*Nf*Ivac(M))/π^2 + potplkv(phi,phib,T)
+    (M-m)^2/4G - (T*Nf*Imed(phi,phib,M,mu,T) + 3*Nf*Ivac(M))/π^2 + potplkv(phi,phib,T)
 end
 
 function dphi(phi,phib,mu,T,M)
@@ -33,5 +33,7 @@ end
 function dM(phi, phib, mu, T, M)
     ForwardDiff.derivative(Mi -> potential(phi, phib, mu, T, Mi), M)
 end
+
+
 
 
