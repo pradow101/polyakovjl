@@ -49,19 +49,19 @@ end
 
 begin
     # Define the range of M and phi values
-    Mi = range(-0.5, 0.5, length = 100)  # Range for M
-    phi_k = range(-0.5, 0.5, length = 100)  # Range for phi
+    Mi = range(0.01, 0.5, length = 500)  # Range for M
+    phi_k = range(-0.5, 0.5, length = 500)  # Range for phi
 
     # Create a grid of M and phi values
     M_grid = repeat(Mi, 1, length(phi_k))  # Repeat M values along rows
     phi_grid = repeat(phi_k', length(Mi), 1)  # Repeat phi values along columns
 
     # Compute yi for each pair of (M, phi) on the grid
-    yi = [potential(phi, 0.18, 0.34, 0.17, M) for (M, phi) in zip(M_grid[:], phi_grid[:])]
+    yi = [potential(phi, 0.01, 0.35, M, 0.2) for (M, phi) in zip(M_grid[:], phi_grid[:])]
 
     # Reshape yi to match the grid dimensions
     yi = reshape(yi, length(Mi), length(phi_k))
 
     # Plot the 3D surface
-    plot3d(Mi, phi_k, yi, st=:surface, xlabel = "M", ylabel = "phi", zlabel = "potential", title = "Potential vs M and phi")
+    plot3d(Mi, phi_k, yi, st=:surface, xlabel = "M", ylabel = "phi", zlabel = "potential", title = "Potential vs M and phi", grid=true, gridalpha=0.5)
 end
