@@ -1,5 +1,5 @@
 begin
-    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff
+    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff, Optim
     include("parameters.jl")
     include("functions.jl")
 
@@ -65,3 +65,82 @@ begin
     # Plot the 3D surface
     plot3d(Mi, phi_k, yi, st=:surface, xlabel = "M", ylabel = "phi", zlabel = "potential", title = "Potential vs M and phi", grid=true, gridalpha=0.5)
 end
+
+function gapsolver(mu,T,phi,chuteinit)
+    sistema = nlsolve(x->(dM(phi,x[1],mu,T,x[2]),dphib(phi,x[1],mu,T,x[2])),chuteinit)
+    return sistema.zero
+end
+
+begin
+    chuteinit = [0.1,0.3]
+    phi_loop = range(0,0.7, length = 100)
+    M_valores = zeros(length(phi_loop))
+    phib_valores = zeros(length(phi_loop))
+    pot_sols = zeros(length(phi_loop))
+    mu = 0.34
+    T = 0.05
+    for i in 1:length(phi_loop)
+        phi = phi_loop[i]
+        solution = gapsolver(mu, T, phi, chuteinit) #Call gapsolver function, store it in the variable solution
+        M_valores[i] = solution[1] #solution is a vector of 3 floats, and we are storing the first one in phi_vals[i],
+        phib_valores[i] = solution[2] #the second one in phib_vals[i], and the third one in M_vals[i]
+        chuteinit = solution
+        
+        pot_sols[i] = potential(phi, phib_valores[i], mu, T, M_valores[i])
+    end
+    plot(phi_loop, pot_sols, grid=true, gridalpha=0.5, xlabel = "M", ylabel = "potential", title = "Potential vs M")
+end
+
+begin
+    function logarg(phi, phib, mu, T, M, p)
+        return 1 + 3*(phi + phib*exp(-(Ep(p,M) - mu)/T))*exp(-(Ep(p,M) - mu)/T) + exp(-3*(Ep(p,M) - mu)/T)
+    end
+    phi_loop = range(0,0.7, length = 100)
+    M_valores = zeros(length(phi_loop))
+    phib_valores = zeros(length(phi_loop))
+    pot_sols = zeros(length(phi_loop))
+    yi = zeros(length(phi_loop))
+    for i in 1:length(phi_loop)
+        phi = phi_loop[i]
+        phib = phib_valores[i]
+        mu = 0.34
+        T = 0.05
+        M = M_valores[i]
+        yi[i] = logarg(phi, phib, mu, T, M, 0.5)    
+    end
+
+    plot(phi_loop, yi)
+end
+
+
+begin
+    res = optimize(x -> potential(0.01, 0.01, mu, T, x[1]), chuteinit)
+    chuteinit = [0.4]
+    mu, T = 0, 0.01
+    print(res)
+    Mrange = range(-0.5, 0.5, length = 100)
+
+    # yi = [potential(0.01,0.01,0,0.01,M) for M in Mrange]
+    # plot(Mrange, yi, xlabel = "M", ylabel = "potential", title = "Potential vs M")
+
+    a = nlsolve(x-> potential(0.01,0.01,0,0.01,x[1]) + 2.802303e-02, chuteinit)
+    println(a.zero)
+
+    b = dM(0.01,0.01,0,0.01,0.3261988478194129)
+    println(b)
+
+    #extrair resultado do optimize, calcular os valores da massa, phi e phib pois
+    #optimize retorna valores do potencial
+end
+
+
+
+
+##PRESSÃO DE STEFAN BOLTZMANN
+
+pf = T^4*(8π^2/45 + 42π^2/180)
+
+#Plotar p = -Ω/pf e comparar com figura 7 do Ratti. Checar a parametrização
+
+
+

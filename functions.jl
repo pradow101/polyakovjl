@@ -6,9 +6,9 @@ Ep(p,M) = sqrt(p^2 + M^2)
 
 potplkv(phi,phib,T) = T^4*((-(a0 + a1*(t0/T) + a2*(t0/T)^2 + a3*(t0/T)^3)/2)*phib*phi - (b3/6)*(phi^3 + phib^3) + (b4/4)*(phib*phi)^2)
 
-zminus(phi,phib,M,mu,T,p) = log(1 + 3*(phi + phib*exp(-(Ep(p,M) - mu)/T))*exp(-(Ep(p,M) - mu)/T) + exp(-3*(Ep(p,M) - mu)/T))
+zminus(phi,phib,M,mu,T,p) = log(abs(1 + 3*(phi + phib*exp(-(Ep(p,M) - mu)/T))*exp(-(Ep(p,M) - mu)/T) + exp(-3*(Ep(p,M) - mu)/T)))
 
-zplus(phi,phib,M,mu,T,p) = log(1 + 3*(phib + phi*exp(-(Ep(p,M) + mu)/T))*exp(-(Ep(p,M) + mu)/T) + exp(-3*(Ep(p,M) + mu)/T))
+zplus(phi,phib,M,mu,T,p) = log(abs(1 + 3*(phib + phi*exp(-(Ep(p,M) + mu)/T))*exp(-(Ep(p,M) + mu)/T) + exp(-3*(Ep(p,M) + mu)/T)))
 
 function Imed(phi,phib,M,mu,T)
     quadgk(p -> p^2 * (zminus(phi,phib,M,mu,T,p) + zplus(phi,phib,M,mu,T,p)), 0, Inf)[1]

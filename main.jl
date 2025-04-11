@@ -11,11 +11,11 @@ function gapsolver(mu,T,chuteinit)
 end
 
 begin
-    T_vals = range(0.001, 0.3, length = 1000) #range for T
+    T_vals = range(0.001, 0.3, length = 100) #range for T
     phi_vals = zeros(length(T_vals)) # Arrays which will store the phi, phib and M solutions
     phib_vals = zeros(length(T_vals))
     M_vals = zeros(length(T_vals))
-    mu = 0.34 
+    mu = 0.27
     chuteinit = [0.01,0.01,0.3]
      for i in 1:length(T_vals) #Initial guess
         T = T_vals[i]  #Tells the program to use the ith value of the T_vals array
@@ -25,7 +25,7 @@ begin
         M_vals[i] = solution[3]
         chuteinit = solution #update the initial guess with the previous solution
     end
-    plot(T_vals, [phi_vals, phib_vals], grid=true, gridalpha=0.5)
+    plot(T_vals, [M_vals, phi_vals], grid=true, gridalpha=0.5)
 end
 ##debugging
 begin
