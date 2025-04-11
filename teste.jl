@@ -13,19 +13,19 @@ function gapsolver(mu,T,chuteinit)
 end
 
 begin
-    T_vals = range(0.001, 0.3, length = 1000)
-    phi_vals = zeros(length(T_vals))
+    T_vals = range(0.001, 0.3, length = 1000) #range for T
+    phi_vals = zeros(length(T_vals)) # Arrays which will store the phi, phib and M solutions
     phib_vals = zeros(length(T_vals))
     M_vals = zeros(length(T_vals))
-    mu = 0.34
+    mu = 0.34 
     chuteinit = [0.01,0.01,0.3]
-    for i in 1:length(T_vals)
-        T = T_vals[i]
-        solution = gapsolver(mu, T, chuteinit)
-        phi_vals[i] = solution[1]
-        phib_vals[i] = solution[2]
+     for i in 1:length(T_vals) #Initial guess
+        T = T_vals[i]  #Tells the program to use the ith value of the T_vals array
+        solution = gapsolver(mu, T, chuteinit) #Call gapsolver function, store it in the variable solution
+        phi_vals[i] = solution[1] #solution is a vector of 3 floats, and we are storing the first one in phi_vals[i],
+        phib_vals[i] = solution[2] #the second one in phib_vals[i], and the third one in M_vals[i]
         M_vals[i] = solution[3]
-        chuteinit = solution
+        chuteinit = solution #update the initial guess with the previous solution
     end
     plot(T_vals, [phi_vals, phib_vals], grid=true, gridalpha=0.5)
 end
