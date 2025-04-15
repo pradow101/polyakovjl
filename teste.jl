@@ -13,13 +13,13 @@ function gapsolver(mu,T,chuteinit)
 end
 
 begin
-    T_vals = range(0.001, 0.3, length = 1000) #range for T
+    T_vals = range(0.001, 0.3, length = 50) #range for T
     phi_vals = zeros(length(T_vals)) # Arrays which will store the phi, phib and M solutions
     phib_vals = zeros(length(T_vals))
     M_vals = zeros(length(T_vals))
-    mu = 0.34 
+    mu = 0
     chuteinit = [0.01,0.01,0.3]
-     for i in 1:length(T_vals) #Initial guess
+    for i in 1:length(T_vals) #Initial guess
         T = T_vals[i]  #Tells the program to use the ith value of the T_vals array
         solution = gapsolver(mu, T, chuteinit) #Call gapsolver function, store it in the variable solution
         phi_vals[i] = solution[1] #solution is a vector of 3 floats, and we are storing the first one in phi_vals[i],
@@ -27,7 +27,7 @@ begin
         M_vals[i] = solution[3]
         chuteinit = solution #update the initial guess with the previous solution
     end
-    plot(T_vals, [phi_vals, phib_vals], grid=true, gridalpha=0.5)
+    plot(T_vals, [M_vals, phi_vals], grid=true, gridalpha=0.5, xlabel = "T", ylabel = "phi", title = "Potential vs M and phi")
 end
 
 ##debugging
@@ -137,8 +137,28 @@ end
 
 
 ##PRESSÃO DE STEFAN BOLTZMANN
+begin
+    trange = range(0.3, 2, length = 100)
+    pf(T) = T^4*(8π^2/45 + 42π^2/180)
+    phisol = zeros(length(trange))
+    phibsol = zeros(length(trange))
+    Msol = zeros(length(trange))
+    p = zeros(length(trange))
+    mu = 0
+    chuteinit = [0.01,0.01,0.3]
+    for i in 1:length(trange)
+        T = trange[i]/0.19
+        solsarray = gapsolver(mu, T, chuteinit)
+        phisol[i] = solsarray[1]
+        phibsol[i] = solsarray[2]
+        Msol[i] = solsarray[3]
+        chuteinit = solsarray
+        p[i] = -potential(phisol[i], phibsol[i], mu, T, Msol[i])/pf(T)
+    end
+    plot(trange, p)
+end
 
-pf = T^4*(8π^2/45 + 42π^2/180)
+
 
 #Plotar p = -Ω/pf e comparar com figura 7 do Ratti. Checar a parametrização
 

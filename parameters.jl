@@ -1,5 +1,6 @@
 GeV = 1
 MeV = 1e-3
+fm = 197.3MeV
 
 m = 5.5MeV
 G = 5.04
@@ -7,6 +8,8 @@ lamb = 651MeV
 t0 = 190MeV 
 Nc = 3
 Nf = 2
+
+tc = 0.2
 
 a0 = 6.75
 a1 = -1.95
