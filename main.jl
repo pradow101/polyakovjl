@@ -12,6 +12,14 @@ function gapsolver(mu,T,chutealto)
 end
 
 
+function maxfind(x, T_vals) #Here x will play the role of the derivatives of phi, phib and M solutions for a given μ
+    for i in 1:length(x)
+        if x[i+1] < x[i] && x[i-1] < x[i]  
+            return x[i], T_vals[i]
+        end
+    end
+end
+
 begin
     function Trangesolver(mu, T_vals)
         T_vals = range(0.01, 0.35, length = 500) #range for T
@@ -47,14 +55,15 @@ begin
             derinterp[i,3] = only(Interpolations.gradient(itpphib, T_vals[i]))/23
             derinterp[i,4] = -only(Interpolations.gradient(itpM, T_vals[i]))/23    
         end
-        return Mder, phider, phibder, T_vals 
-    end
-
-    
-
-
-#plot(T_vals, [M_vals], grid=true, gridalpha=0.5, xlabel = "T", ylabel = "phi, M", title = "M and phi solutions")
+        return interp, derinterp
+    end 
+    #interp, derinterp = Interp(T_vals, phi_vals, phib_vals, M_vals)
 end
+
+
+
+
+#plot(T_vals, [M_vals], grid=true, gridalpha=0.5, xlabel = "T", ylabel = "phi, M", title = "M and phi solutions")end
 
         
 begin       #calculating and plotting the pressure
@@ -67,24 +76,6 @@ begin       #calculating and plotting the pressure
         pf_vals[i] = -(potential(phi, phib, 0, T, M) - potential(phi, phib, 0, 0.001, M))/pf(T) #pressure
     end
     plot(T_vals, pf_vals, grid = true, gridalpha=0.5, xlabel = "T", ylabel = "Pressure", title = "Pressure vs T", xrange = (0.1,0.395))
-end
-
-
-
-#Solving the gap eqns for different values of mu
-begin
-
-
-
-    function maxfind(x, T) #Here x will play the role of phi, phib and M solutions for a given μ
-        for i in 1:length(x)
-            if x[i+1] < x[i] && x[i-1] < x[i]  
-                return x[i], T_vals[i]
-            end
-        end
-    end
-
-
 end
 
 
