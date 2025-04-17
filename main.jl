@@ -13,7 +13,7 @@ end
 
 
 function maxfind(y, T) #Here x will play the role of the derivatives of phi, phib and M solutions for a given μ
-    for i in 100:length(y)
+    for i in 150:length(y)
         if y[i+1] < y[i] && y[i-1] < y[i]  
             return T[i], y[i]
         end
@@ -57,7 +57,7 @@ begin
     end
 
     function murangesolver(T_vals)
-        mu_vals = range(0,0.32,length=150)
+        mu_vals = range(0,0.32,length=80)
         solutions = zeros(length(mu_vals), length(T_vals), 4)
         println(size(solutions))
         println(size(mu_vals))
@@ -75,15 +75,16 @@ begin
 end
 
 
-begin
-    T_vals = range(0.1,0.4,500)
-    mu = 0
-    T_vals, phi_vals, phib_vals, M_vals = Trangesolver(mu, T_vals)
-    plot(T_vals, [phi_vals, phib_vals], grid=true, gridalpha=0.5, xlabel = "T", ylabel = "phi, phib", title = "phi and phib solutions")
-end
+# begin
+#     T_vals = range(0.01,0.1,150)
+#     mu = 0.34
+#     T_vals, phi_vals, phib_vals, M_vals = Trangesolver(mu, T_vals)
+#     plot(T_vals, [M_vals,phi_vals, phib_vals], grid=true, gridalpha=0.5, xlabel = "T", ylabel = "phi, phib", title = "phi and phib solutions", linewidth = 2, label = ["M" "ϕ" "ϕ*"])
+
+# end
 
 @time begin
-    T_vals = range(0.04,0.4,1000)
+    T_vals = range(0.04,0.4,2000)
     murange, muvalores = murangesolver(T_vals)
 end
 
@@ -125,37 +126,39 @@ end
 #plot(T_vals, [M_vals], grid=true, gridalpha=0.5, xlabel = "T", ylabel = "phi, M", title = "M and phi solutions")end
 
         
-begin       #calculating and plotting the pressure
-    T_vals = range(0.1,0.4,500)
-    mu = 0
-    T_vals, phi_vals, phib_vals, M_vals = Trangesolver(mu, T_vals)
-    pf_vals = zeros(length(T_vals))
-    for i in 1:length(T_vals)
-        T = T_vals[i]
-        phi = phi_vals[i]
-        phib = phib_vals[i]
-        M = M_vals[i]
-        pf_vals[i] = -(potential(phi, phib, 0, T, M) - potential(phi, phib, 0, 0.001, M))/pf(T) #pressure
-    end
-    plot(T_vals, pf_vals, grid = true, gridalpha=0.5, xlabel = "T", ylabel = "Pressure", title = "Pressure vs T", xrange = (0.1,0.395))
-end
+# begin       #calculating and plotting the pressure
+#     T_vals = range(0.1,0.4,500)
+#     mu = 0
+#     T_vals, phi_vals, phib_vals, M_vals = Trangesolver(mu, T_vals)
+#     pf_vals = zeros(length(T_vals))
+#     for i in 1:length(T_vals)
+#         T = T_vals[i]
+#         phi = phi_vals[i]
+#         phib = phib_vals[i]
+#         M = M_vals[i]
+#         pf_vals[i] = -(potential(phi, phib, 0, T, M) - potential(phi, phib, 0, 0.001, M))/pf(T) #pressure
+#     end
+#     plot(T_vals, pf_vals, grid = true, gridalpha=0.5, xlabel = "T", ylabel = "Pressure", title = "Pressure vs T", xrange = (0.1,0.395))
+# end
 
 
 begin
     Ttransitionphi = zeros(length(muvalores))
     Ttransitionphib = zeros(length(muvalores))
+    actualphi = zeros(length(muvalores))
     TtransitionM = zeros(length(muvalores))
     Mutransition = muvalores
     Threads.@threads for i in eachindex(muvalores)
         Ttransitionphi[i] = maxfind(phi_valores[:,i], T_valores[:,1])[1]
         Ttransitionphib[i] = maxfind(phib_valores[:,i], T_valores[:,1])[1]
         TtransitionM[i] = maxfind(M_valores[:,i], T_valores[:,1])[1]
+        actualphi[i] = (Ttransitionphi[i] + Ttransitionphib[i])/2
     end
-    scatter(Mutransition, [Ttransitionphi, Ttransitionphib, TtransitionM], 
-    label = ["ϕ Transition" "ϕ* Transition" "M Transition"],
+    plot(Mutransition, [Ttransitionphi, actualphi], 
+    label = ["ϕ Transition" "M Transition"],
     xlabel = "μ [GeV]",
     ylabel = "T [GeV]",
-    title = "PNJL Phase Diagram", dpi=800)
+    title = "PNJL Phase Diagram", dpi=800, linewidth = 3,)
         
 end
 
