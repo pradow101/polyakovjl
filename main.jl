@@ -32,6 +32,7 @@ begin
             phi_vals[i] = solution[1] #solution is a vector of 3 floats, and we are storing the first one in phi_vals[i],
             phib_vals[i] = solution[2] #the second one in phib_vals[i], and the third one in M_vals[i]
             M_vals[i] = solution[3]
+            #here I need to implement a condition to switch initial guess values
             chutealto = solution
         end
         return T_vals, phi_vals, phib_vals, M_vals
@@ -159,7 +160,6 @@ begin
     xlabel = "μ [GeV]",
     ylabel = "T [GeV]",
     title = "PNJL Phase Diagram", dpi=800, linewidth = 3,)
-        
 end
 
 
