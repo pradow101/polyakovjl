@@ -13,11 +13,12 @@ end
 
 
 function maxfind(y, T) #Here x will play the role of the derivatives of phi, phib and M solutions for a given μ
-    for i in 150:length(y)
+    for i in 150:length(y)-1
         if y[i+1] < y[i] && y[i-1] < y[i]  
             return T[i], y[i]
         end
     end
+    return NaN, NaN # Return NaN if no maximum is found
 end
 
 begin
@@ -58,7 +59,7 @@ begin
     end
 
     function murangesolver(T_vals)
-        mu_vals = range(0,0.32,length=80)
+        mu_vals = range(0,0.32,length=100)
         solutions = zeros(length(mu_vals), length(T_vals), 4)
         println(size(solutions))
         println(size(mu_vals))
@@ -85,7 +86,7 @@ end
 # end
 
 @time begin
-    T_vals = range(0.04,0.4,2000)
+    T_vals = range(0.04,0.4,700)
     murange, muvalores = murangesolver(T_vals)
 end
 
@@ -119,7 +120,6 @@ begin
         phib_valores[:,i] = interploop[:,3]
         M_valores[:,i] = interploop[:,4]
     end
-    plot(T_valores[:,1], phi_valores[:,1], label = "phi")
 end 
 
 
@@ -149,7 +149,7 @@ begin
     actualphi = zeros(length(muvalores))
     TtransitionM = zeros(length(muvalores))
     Mutransition = muvalores
-    Threads.@threads for i in eachindex(muvalores)
+    Threads.@threads for i in 1:length(muvalores)
         Ttransitionphi[i] = maxfind(phi_valores[:,i], T_valores[:,1])[1]
         Ttransitionphib[i] = maxfind(phib_valores[:,i], T_valores[:,1])[1]
         TtransitionM[i] = maxfind(M_valores[:,i], T_valores[:,1])[1]
@@ -159,7 +159,8 @@ begin
     label = ["ϕ Transition" "M Transition"],
     xlabel = "μ [GeV]",
     ylabel = "T [GeV]",
-    title = "PNJL Phase Diagram", dpi=800, linewidth = 3,)
+    title = "PNJL Phase Diagram", dpi=800, linewidth = 3)
+    plot!([0.33179511923942306],[0.06557512531076132],color="green")
 end
 
 

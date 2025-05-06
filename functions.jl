@@ -36,10 +36,26 @@ function dM(phi, phib, mu, T, M)
     ForwardDiff.derivative(Mi -> potential(phi, phib, mu, T, Mi), M)
 end
 
-begin
-    function logargs(phi, phib, mu, T, M)
-        1 + 3*(phi + phib*exp(-(Ep(p,M) - mu)/T))*exp(-(Ep(p,M) - mu)/T) + exp(-3*(Ep(p,M) - mu)/T)
-    end
+function dM2(phi, phib, mu, T, M)
+    ForwardDiff.derivative(Mi -> dM(phi, phib, mu, T, Mi), M)
+end
 
+function dM3(phi, phib, mu, T, M)
+    ForwardDiff.derivative(Mi -> dM2(phi, phib, mu, T, Mi), M)
+end
 
+function dMu(phi, phib, mu, T, M)
+    ForwardDiff.derivative(mui -> dM(phi, phib, mui, T, M), mu)
+end
+
+function eq1(phi, phib, mu, T, M)
+    a = dM2(phi, phib, mu, T, M)
+    b = dMu(phi, phib, mu, T, M)
+    return a/b
+end
+
+function eq2(phi, phib, mu, T, M)
+    a = dM3(phi, phib, mu, T, M)
+    b = dMu(phi, phib, mu, T, M)
+    return a/b
 end
