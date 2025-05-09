@@ -86,7 +86,7 @@ end
 # end
 
 @time begin
-    T_vals = range(0.04,0.4,700)
+    T_vals = range(0.04,0.4,1000)
     murange, muvalores = murangesolver(T_vals)
 end
 
@@ -164,3 +164,34 @@ begin
 end
 
 
+##Aqui vou definir outro jeito de se obter os valores críticos de μ usando a densidade
+function gapsolvedensidade(T, chuteinit, nb)
+    sistema = nlsolve(x->(dM(x[1],x[2],x[3],T,x[4]),dphi(x[1],x[2],x[3],T,x[4]),dphib(x[1],x[2],x[3],T,x[4]),densidade(x[1],x[2],x[3],T,x[4],nb)),chuteinit)
+    return sistema.zero
+end
+
+
+##ESSA SEÇÃO DE CÓDIGO É A MAIS IMPORTANTE ATÉ AGORA, NÃO QUEBRAR
+begin
+    Nbvals = range(0.0001,0.01,length=100)
+    T = 0.04
+    phi_vals = zeros(length(Nbvals)) # Arrays which will store the phi, phib and M solutions
+    phib_vals = zeros(length(Nbvals))
+    M_vals = zeros(length(Nbvals))
+    mu_vals = zeros(length(Nbvals))
+    potential_vals = zeros(length(Nbvals))
+    chuteinit = [0.01,0.01,0.4,0.4]
+    for i in 1:length(Nbvals) #Initial guess
+        nb = Nbvals[i]  #Tells the program to use the ith value of the T_vals array
+        solution = gapsolvedensidade(T, chuteinit, nb) #Call gapsolver function, store it in the variable solution
+        phi_vals[i] = solution[1] #solution is a vector of 3 floats, and we are storing the first one in phi_vals[i],
+        phib_vals[i] = solution[2] #the second one in phib_vals[i], and the third one in M_vals[i]
+        mu_vals[i] = solution[3]
+        M_vals[i] = solution[4]
+        chuteinit = solution
+        potential_vals[i] = potential(phi_vals[i], phib_vals[i], mu_vals[i], T, M_vals[i])
+    end
+    plot(mu_vals, [M_vals,phi_vals], seriestype=:path)
+end
+
+    

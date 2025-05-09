@@ -59,3 +59,8 @@ function eq2(phi, phib, mu, T, M)
     b = dMu(phi, phib, mu, T, M)
     return a/b
 end
+
+function densidade(phi,phib,mu,T,M,nb)
+    a = ForwardDiff.derivative(mui -> potential(phi, phib, mui, T, M), mu)
+    return a + nb
+end

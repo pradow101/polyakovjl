@@ -163,4 +163,12 @@ end
 #Plotar p = -Ω/pf e comparar com figura 7 do Ratti. Checar a parametrização
 
 
+begin
+    function CEPfinder(chuteinit)
+        sistema = nlsolve(x->(dM(x[1],x[2],x[3],x[4],x[5]),dphi(x[1],x[2],x[3],x[4],x[5]),dphib(x[1],x[2],x[3],x[4],x[5]),eq1(x[1],x[2],x[3],x[4],x[5]),eq2(x[1],x[2],x[3],x[4],x[5])),chuteinit)
+        return sistema.zero
+    end
+    a = CEPfinder([0.01,0.01,0.3,0.1,0.1])
+    println(a)
 
+end
