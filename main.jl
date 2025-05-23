@@ -1,5 +1,6 @@
 begin
-    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff, Interpolations, LocalFunctionApproximation
+    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff, Interpolations, LocalFunctionApproximation, CurveFit
+
     include("parameters.jl")
     include("functions.jl")
 
@@ -191,7 +192,21 @@ begin
         chuteinit = solution
         potential_vals[i] = potential(phi_vals[i], phib_vals[i], mu_vals[i], T, M_vals[i])
     end
-    plot(mu_vals, [M_vals,phi_vals], seriestype=:path)
+    plot(mu_vals, potential_vals, seriestype=:path)
+    df = DataFrame(a = mu_vals, b = potential_vals)
+    CSV.write("outputpotencial.csv", df)
 end
 
-    
+begin
+    #aqui, preciso dar um jeito de achar o valor para qual o potencial começa a voltar
+    #vou usar a condição de quando o valor de mu aumenta pela primeira vez, de depois quando volta a cair.
+    firstcurve = []
+    secondcurve = []
+    i=1
+    while mu_vals[i] < mu_vals[i+1]
+        push!(firstcurve, mu_vals[i])
+        i += 1 
+        break 
+    end
+    println(firstcurve)
+end
