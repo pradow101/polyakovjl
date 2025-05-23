@@ -174,8 +174,8 @@ end
 
 ##ESSA SEÇÃO DE CÓDIGO É A MAIS IMPORTANTE ATÉ AGORA, NÃO QUEBRAR
 begin
-    Nbvals = range(0.0001,0.01,length=100)
-    T = 0.04
+    Nbvals = range(0.0001,0.01,length=1000)
+    T = 0.03
     phi_vals = zeros(length(Nbvals)) # Arrays which will store the phi, phib and M solutions
     phib_vals = zeros(length(Nbvals))
     M_vals = zeros(length(Nbvals))
@@ -192,21 +192,28 @@ begin
         chuteinit = solution
         potential_vals[i] = potential(phi_vals[i], phib_vals[i], mu_vals[i], T, M_vals[i])
     end
-    plot(mu_vals, potential_vals, seriestype=:path)
-    df = DataFrame(a = mu_vals, b = potential_vals)
-    CSV.write("outputpotencial.csv", df)
+    scatter(mu_vals, [M_vals], seriestype=:path)
 end
 
 begin
     #aqui, preciso dar um jeito de achar o valor para qual o potencial começa a voltar
     #vou usar a condição de quando o valor de mu aumenta pela primeira vez, de depois quando volta a cair.
-    firstcurve = []
-    secondcurve = []
-    i=1
-    while mu_vals[i] < mu_vals[i+1]
-        push!(firstcurve, mu_vals[i])
-        i += 1 
-        break 
+    firstcurve = zeros(length(mu_vals))
+    secondcurve = zeros(length(mu_vals))
+    i=2
+    while abs(potential_vals[i-1]) > abs(potential_vals[i])
+        firstcurve[i] = potential_vals[i]
+        i += 1
     end
     println(firstcurve)
+end
+
+
+begin
+    interp1potenvals = interpolate((mu_vals,), potential_vals, Gridded(Linear()))
+    interpolado = zeros(length(mu_vals))
+    for i in range(length(mu_vals))
+        interpolado[i] = only(Interpolations.gradient(interp1potenvals, mu_vals[i]))
+    end
+    plot(interpolado[i], mu_vals)
 end
