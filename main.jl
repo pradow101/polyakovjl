@@ -1,5 +1,5 @@
 begin
-    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff, Interpolations, LocalFunctionApproximation, CurveFit
+    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff, DataInterpolations, LocalFunctionApproximation
 
     include("parameters.jl")
     include("functions.jl")
@@ -174,40 +174,101 @@ end
 
 ##ESSA SEÇÃO DE CÓDIGO É A MAIS IMPORTANTE ATÉ AGORA, NÃO QUEBRAR
 begin
-    Nbvals = range(0.0001,0.01,length=1000)
-    T = 0.03
-    phi_vals = zeros(length(Nbvals)) # Arrays which will store the phi, phib and M solutions
-    phib_vals = zeros(length(Nbvals))
-    M_vals = zeros(length(Nbvals))
-    mu_vals = zeros(length(Nbvals))
-    potential_vals = zeros(length(Nbvals))
-    chuteinit = [0.01,0.01,0.4,0.4]
-    for i in 1:length(Nbvals) #Initial guess
-        nb = Nbvals[i]  #Tells the program to use the ith value of the T_vals array
-        solution = gapsolvedensidade(T, chuteinit, nb) #Call gapsolver function, store it in the variable solution
-        phi_vals[i] = solution[1] #solution is a vector of 3 floats, and we are storing the first one in phi_vals[i],
-        phib_vals[i] = solution[2] #the second one in phib_vals[i], and the third one in M_vals[i]
-        mu_vals[i] = solution[3]
-        M_vals[i] = solution[4]
-        chuteinit = solution
-        potential_vals[i] = potential(phi_vals[i], phib_vals[i], mu_vals[i], T, M_vals[i])
+    function Trange_density(T)
+        Nbvals = range(0.0001,0.01,length=100)
+        phi_vals = zeros(length(Nbvals)) # Arrays which will store the phi, phib and M solutions
+        phib_vals = zeros(length(Nbvals))
+        M_vals = zeros(length(Nbvals))
+        mu_vals = zeros(length(Nbvals))
+        potential_vals = zeros(length(Nbvals))
+        chuteinit = [0.01,0.01,0.4,0.4]
+        for i in 1:length(Nbvals) #Initial guess
+            nb = Nbvals[i]  #Tells the program to use the ith value of the T_vals array
+            solution = gapsolvedensidade(T, chuteinit, nb) #Call gapsolver function, store it in the variable solution
+            phi_vals[i] = solution[1] #solution is a vector of 3 floats, and we are storing the first one in phi_vals[i],
+            phib_vals[i] = solution[2] #the second one in phib_vals[i], and the third one in M_vals[i]
+            mu_vals[i] = solution[3]
+            M_vals[i] = solution[4]
+            chuteinit = solution
+            potential_vals[i] = potential(phi_vals[i], phib_vals[i], mu_vals[i], T, M_vals[i])
+        end
+        return Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals
     end
-    scatter(mu_vals, [M_vals], seriestype=:path)
 end
 
 begin
     #aqui, preciso dar um jeito de achar o valor para qual o potencial começa a voltar
     #vou usar a condição de quando o valor de mu aumenta pela primeira vez, de depois quando volta a cair.
-    firstcurve = zeros(length(mu_vals))
-    secondcurve = zeros(length(mu_vals))
-    i=2
-    while abs(potential_vals[i-1]) > abs(potential_vals[i])
-        firstcurve[i] = potential_vals[i]
-        i += 1
+    function interpot(pvals, muvals)
+        firstcurvex = []
+        firstcurvey = []
+        secondcurvex = []
+        secondcurvey = []
+        for i in 2:length(mu_vals)
+            if mu_vals[i] < mu_vals[i-1]
+                break
+            end
+            append!(firstcurvey, potential_vals[i])
+            append!(firstcurvex, mu_vals[i])
+        end
+        for i in length(mu_vals)-1:-1:1
+            if mu_vals[i] < mu_vals[i-1]
+                break
+            end
+            append!(secondcurvey, potential_vals[i])
+            append!(secondcurvex, mu_vals[i])
+        end  
+    # plot(firstcurvex, firstcurvey, label = "First Curve", xlabel = "μ [GeV]", ylabel = "Potential", title = "Potential vs μ", linewidth = 2, grid=true, gridalpha=0.5)
+    # plot!(secondcurvex, secondcurvey, label = "Second Curve", linewidth = 2, grid=true, gridalpha=0.5) 
+    # scatter!(mu_vals, potential_vals)
+        return firstcurvex, firstcurvey, secondcurvex, secondcurvey
     end
-    println(firstcurve)
 end
 
+begin
+    Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(0.02)
+    firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
+    interp1, interp2 = fofinder(0.02)
+
+    length(interp1)
+    plot(mu_vals, M_vals)
+    # plot(firstcurvex, firstcurvey, label = "First Curve", xlabel = "μ [GeV]", ylabel = "Potential", title = "Potential vs μ", linewidth = 2, grid=true, gridalpha=0.5)
+    # plot!(interp1, label = "First Curve Interpolated", linewidth = 2, grid=true, gridalpha=0.5)
+    # plot!(secondcurvex, secondcurvey, label = "Second Curve", linewidth = 2, grid=true, gridalpha=0.5)
+end
+
+
+begin
+    function fofinder(T)
+        Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(T)
+        firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
+
+        x1 = Vector{Float64}(firstcurvex)
+        y1 = Vector{Float64}(firstcurvey)
+        x2 = Vector{Float64}(secondcurvex)
+        y2 = Vector{Float64}(secondcurvey)
+
+        interp1 = DataInterpolations.CubicSpline(y1, x1)
+        interp2 = DataInterpolations.CubicSpline(y2, x2)
+
+        return interp1, interp2
+        # diferenca = x -> (interp1(x) - interp2(x))
+
+        # mucritico = nlsolve(diferenca, 0.1, method=:newton)
+        # return mucritico.zero[1]
+    end
+end
+# begin
+#     _, mu_vals,_,_,_,potential_vals = Trange_density(0.02)
+#     curva1x, curva1y, curva2x, curva2y = interpot(potential_vals, mu_vals)
+#     plot(curva1x, curva1y, label = "First Curve", xlabel = "μ [GeV]", ylabel = "Potential", title = "Potential vs μ", linewidth = 2, grid=true, gridalpha=0.5)
+#     plot!(curva2x, curva2y, label = "Second Curve", linewidth = 2, grid=true, gridalpha=0.5)
+# end
+
+
+begin
+    fofinder(0.02)    
+end
 
 begin
     interp1potenvals = interpolate((mu_vals,), potential_vals, Gridded(Linear()))
