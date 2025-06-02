@@ -1,5 +1,5 @@
 begin
-    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff, DataInterpolations, LocalFunctionApproximation
+    using QuadGK, Plots, NLsolve, CSV, DataFrames, ForwardDiff, DataInterpolations, LocalFunctionApproximation, Interpolations
 
     include("parameters.jl")
     include("functions.jl")
@@ -14,7 +14,7 @@ end
 
 
 function maxfind(y, T) #Here x will play the role of the derivatives of phi, phib and M solutions for a given μ
-    for i in 150:length(y)-1
+    for i in 100:length(y)-1
         if y[i+1] < y[i] && y[i-1] < y[i]  
             return T[i], y[i]
         end
@@ -60,7 +60,7 @@ begin
     end
 
     function murangesolver(T_vals)
-        mu_vals = range(0,0.32,length=100)
+        mu_vals = range(0,0.331,length=150)
         solutions = zeros(length(mu_vals), length(T_vals), 4)
         println(size(solutions))
         println(size(mu_vals))
@@ -87,9 +87,10 @@ end
 # end
 
 @time begin
-    T_vals = range(0.04,0.4,1000)
+    T_vals = range(0.04,0.4,1500)
     murange, muvalores = murangesolver(T_vals)
 end
+
 
 begin #ok, estão certos os resultados. Preciso achar um jeito de interpolar cada um
     a = murange[1,:,1]
@@ -99,9 +100,6 @@ begin #ok, estão certos os resultados. Preciso achar um jeito de interpolar cad
     e = murange[1,:,4]*3
     f = murange[50,:,4]*3
     g = murange[100,:,4]*3
-
-    df = DataFrame(a = a, b = b, c = c, d = d, e = e, f = f, g = g)
-    CSV.write("output.csv", df)
 end
 
 begin
@@ -123,6 +121,9 @@ begin
     end
 end 
 
+begin
+    maxfind(M_valores[:,150], T_valores[:,1])
+end
 
 
 #plot(T_vals, [M_vals], grid=true, gridalpha=0.5, xlabel = "T", ylabel = "phi, M", title = "M and phi solutions")end
@@ -156,21 +157,37 @@ begin
         TtransitionM[i] = maxfind(M_valores[:,i], T_valores[:,1])[1]
         actualphi[i] = (Ttransitionphi[i] + Ttransitionphib[i])/2
     end
-    plot(Mutransition, [Ttransitionphi, actualphi], 
+    Trange = range(0.01, 0.065, length=50)  # Replace with your desired range
+    mucriticos = zeros(length(Trange))
+    Threads.@threads for i in 1:length(Trange)
+        chuteinit = 0.32
+        mucriticos[i] = fofinder(Trange[i], chuteinit)
+        chuteinit = mucriticos[i]
+    end
+    scatter(mucriticos, Trange, legend = false)
+    scatter!(Mutransition, [Ttransitionphi, actualphi], 
     label = ["ϕ Transition" "M Transition"],
     xlabel = "μ [GeV]",
     ylabel = "T [GeV]",
-    title = "PNJL Phase Diagram", dpi=800, linewidth = 3)
-    plot!([0.33179511923942306],[0.06557512531076132],color="green")
+    title = "PNJL Phase Diagram", dpi=800, linewidth = 3, legend = false)
+    scatter!([0.331795119246286],[0.06557512526501373], legend = false)
 end
 
-
+begin
+    println(TtransitionM)
+end
 ##Aqui vou definir outro jeito de se obter os valores críticos de μ usando a densidade
 function gapsolvedensidade(T, chuteinit, nb)
     sistema = nlsolve(x->(dM(x[1],x[2],x[3],T,x[4]),dphi(x[1],x[2],x[3],T,x[4]),dphib(x[1],x[2],x[3],T,x[4]),densidade(x[1],x[2],x[3],T,x[4],nb)),chuteinit)
     return sistema.zero
 end
 
+
+begin
+    CEP = nlsolve(x -> (dM(x[1],x[2],x[3],x[4],x[5]), dphi(x[1],x[2],x[3],x[4],x[5]), dphib(x[1],x[2],x[3],x[4],x[5]), eq1(x[1],x[2],x[3],x[4],x[5]), eq2(x[1],x[2],x[3],x[4],x[5])), [0.1, 0.1, 0.4, 0.4, 0.32]).zero
+    println("phi = $(CEP[1]), phib = $(CEP[2]), mu = $(CEP[3]), T = $(CEP[4]), M = $(CEP[5])")
+    println("CEP = $(CEP)")
+end
 
 ##ESSA SEÇÃO DE CÓDIGO É A MAIS IMPORTANTE ATÉ AGORA, NÃO QUEBRAR
 begin
@@ -204,42 +221,26 @@ begin
         firstcurvey = []
         secondcurvex = []
         secondcurvey = []
-        for i in 2:length(mu_vals)
-            if mu_vals[i] < mu_vals[i-1]
+        for i in 2:length(muvals)
+            if muvals[i] < muvals[i-1]
                 break
             end
-            append!(firstcurvey, potential_vals[i])
-            append!(firstcurvex, mu_vals[i])
+            append!(firstcurvey, pvals[i])
+            append!(firstcurvex, muvals[i])
         end
-        for i in length(mu_vals)-1:-1:1
-            if mu_vals[i] < mu_vals[i-1]
+        for i in length(muvals)-1:-1:2
+            if muvals[i] < muvals[i-1]
                 break
             end
-            append!(secondcurvey, potential_vals[i])
-            append!(secondcurvex, mu_vals[i])
-        end  
-    # plot(firstcurvex, firstcurvey, label = "First Curve", xlabel = "μ [GeV]", ylabel = "Potential", title = "Potential vs μ", linewidth = 2, grid=true, gridalpha=0.5)
-    # plot!(secondcurvex, secondcurvey, label = "Second Curve", linewidth = 2, grid=true, gridalpha=0.5) 
-    # scatter!(mu_vals, potential_vals)
+            append!(secondcurvey, pvals[i])
+            append!(secondcurvex, muvals[i])
+        end
         return firstcurvex, firstcurvey, secondcurvex, secondcurvey
     end
 end
 
 begin
-    Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(0.02)
-    firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
-    interp1, interp2 = fofinder(0.02)
-
-    length(interp1)
-    plot(mu_vals, M_vals)
-    # plot(firstcurvex, firstcurvey, label = "First Curve", xlabel = "μ [GeV]", ylabel = "Potential", title = "Potential vs μ", linewidth = 2, grid=true, gridalpha=0.5)
-    # plot!(interp1, label = "First Curve Interpolated", linewidth = 2, grid=true, gridalpha=0.5)
-    # plot!(secondcurvex, secondcurvey, label = "Second Curve", linewidth = 2, grid=true, gridalpha=0.5)
-end
-
-
-begin
-    function fofinder(T)
+    function fofinder(T, chuteinit)
         Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(T)
         firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
 
@@ -248,33 +249,45 @@ begin
         x2 = Vector{Float64}(secondcurvex)
         y2 = Vector{Float64}(secondcurvey)
 
-        interp1 = DataInterpolations.CubicSpline(y1, x1)
-        interp2 = DataInterpolations.CubicSpline(y2, x2)
+        interp1 = DataInterpolations.LinearInterpolation(y1, x1; extrapolate=true)
+        interp2 = DataInterpolations.LinearInterpolation(y2, x2; extrapolate=true)
 
-        return interp1, interp2
-        # diferenca = x -> (interp1(x) - interp2(x))
+        # return interp1, interp2
+        diferenca(mu) = interp1(mu) - interp2(mu)
 
-        # mucritico = nlsolve(diferenca, 0.1, method=:newton)
-        # return mucritico.zero[1]
+        mucritico = nlsolve(x -> [diferenca(x[1])], [chuteinit], method=:newton)
+        return mucritico.zero[1]
     end
-end
-# begin
-#     _, mu_vals,_,_,_,potential_vals = Trange_density(0.02)
-#     curva1x, curva1y, curva2x, curva2y = interpot(potential_vals, mu_vals)
-#     plot(curva1x, curva1y, label = "First Curve", xlabel = "μ [GeV]", ylabel = "Potential", title = "Potential vs μ", linewidth = 2, grid=true, gridalpha=0.5)
-#     plot!(curva2x, curva2y, label = "Second Curve", linewidth = 2, grid=true, gridalpha=0.5)
-# end
-
-
-begin
-    fofinder(0.02)    
 end
 
 begin
-    interp1potenvals = interpolate((mu_vals,), potential_vals, Gridded(Linear()))
-    interpolado = zeros(length(mu_vals))
-    for i in range(length(mu_vals))
-        interpolado[i] = only(Interpolations.gradient(interp1potenvals, mu_vals[i]))
+    Trange = range(0.01, 0.065, length=50)  # Replace with your desired range
+    mucriticos = zeros(length(Trange))
+    for i in 1:length(Trange)
+        chuteinit = 0.32
+        mucriticos[i] = fofinder(Trange[i], chuteinit)
+        chuteinit = mucriticos[i]
     end
-    plot(interpolado[i], mu_vals)
+    plot(mucriticos, Trange)
+end
+
+begin
+    Trange = range(0.01, 0.065, length=10)  # Replace with your desired range
+    plot()  # Initialize empty plot
+
+        for T in Trange
+            Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(T)
+            firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
+
+            #plot!(mu_vals, potential_vals, label="T=$(round(T,digits=3))", lw=2, legend = false)
+            # Plot first curve (solid)
+            plot!(firstcurvex, firstcurvey, label="T=$(round(T,digits=3)) first", lw=2)
+
+            # Plot second curve (dashed or dotted)
+            plot!(secondcurvex, secondcurvey, label="T=$(round(T,digits=3)) second", lw=2)
+        end
+
+    xlabel!("μ")
+    ylabel!("Potential")
+    title!("Potential vs μ (First and Second Curves) for Varying T")
 end
