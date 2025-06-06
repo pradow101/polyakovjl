@@ -160,8 +160,8 @@ begin
     Trange = range(0.01, 0.065, length=50)  # Replace with your desired range
     mucriticos = zeros(length(Trange))
     Threads.@threads for i in 1:length(Trange)
-        chuteinit = 0.32
-        mucriticos[i] = fofinder(Trange[i], chuteinit)
+        chuteinit = 0.3
+        mucriticos[i] = fofinder(Trange[i], chuteinit)[1]
         chuteinit = mucriticos[i]
     end
     scatter(mucriticos, Trange, legend = false)
@@ -192,7 +192,7 @@ end
 ##ESSA SEÇÃO DE CÓDIGO É A MAIS IMPORTANTE ATÉ AGORA, NÃO QUEBRAR
 begin
     function Trange_density(T)
-        Nbvals = range(0.0001,0.01,length=100)
+        Nbvals = range(0.0001,0.01,length=5000)
         phi_vals = zeros(length(Nbvals)) # Arrays which will store the phi, phib and M solutions
         phib_vals = zeros(length(Nbvals))
         M_vals = zeros(length(Nbvals))
@@ -255,24 +255,25 @@ begin
         # return interp1, interp2
         diferenca(mu) = interp1(mu) - interp2(mu)
 
-        mucritico = nlsolve(x -> [diferenca(x[1])], [chuteinit], method=:newton)
-        return mucritico.zero[1]
+        mucritico = nlsolve(x -> [diferenca(x[1])], [chuteinit], method=:newton, ftol=1e-10, xtol=1e-10)
+        return mucritico.zero[1], interp2(mucritico.zero[1])
     end
 end
 
 begin
-    Trange = range(0.01, 0.065, length=50)  # Replace with your desired range
-    mucriticos = zeros(length(Trange))
-    for i in 1:length(Trange)
-        chuteinit = 0.32
-        mucriticos[i] = fofinder(Trange[i], chuteinit)
+    Trange1 = range(0.01, 0.065, length=50)  # Replace with your desired range
+    mucriticos = zeros(length(Trange1))
+    Threads.@threads for i in length(Trange1):-1:1
+        chuteinit = 0.28
+        mucriticos[i] = fofinder(Trange1[i], chuteinit)
         chuteinit = mucriticos[i]
     end
-    plot(mucriticos, Trange)
+    scatter(mucriticos, Trange1)
 end
 
+
 begin
-    Trange = range(0.01, 0.065, length=10)  # Replace with your desired range
+    Trange = range(0.01, 0.075, length=10)  # Replace with your desired range
     plot()  # Initialize empty plot
 
         for T in Trange
@@ -281,13 +282,23 @@ begin
 
             #plot!(mu_vals, potential_vals, label="T=$(round(T,digits=3))", lw=2, legend = false)
             # Plot first curve (solid)
-            plot!(firstcurvex, firstcurvey, label="T=$(round(T,digits=3)) first", lw=2)
+            plot!(firstcurvex, firstcurvey, label="T=$(round(T,digits=3)) first", lw=2, legend = false)
 
             # Plot second curve (dashed or dotted)
-            plot!(secondcurvex, secondcurvey, label="T=$(round(T,digits=3)) second", lw=2)
+            plot!(secondcurvex, secondcurvey, label="T=$(round(T,digits=3)) second", lw=2, legend = false)
         end
 
     xlabel!("μ")
     ylabel!("Potential")
     title!("Potential vs μ (First and Second Curves) for Varying T")
+end
+
+begin
+    Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(0.04)
+    firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
+    mucrit, potcric = fofinder(0.04,0.4)
+    plot(mu_vals, potential_vals, label="Potential vs μ", xlabel="μ", ylabel="Potential", title="Potential vs μ for T=0.04", legend=false)
+    scatter!(firstcurvex, firstcurvey, label="First Curve", marker=:circle, color=:blue)
+    scatter!(secondcurvex, secondcurvey, label="Second Curve", marker=:cross, color=:red)
+    scatter!([mucrit], [potcric], label="Critical Point", marker=:star, color=:green, markersize=8)
 end
