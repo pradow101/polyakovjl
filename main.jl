@@ -192,7 +192,7 @@ end
 ##ESSA SEÇÃO DE CÓDIGO É A MAIS IMPORTANTE ATÉ AGORA, NÃO QUEBRAR
 begin
     function Trange_density(T)
-        Nbvals = range(0.0001,0.01,length=5000)
+        Nbvals = range(0.0001,0.01,length=50)
         phi_vals = zeros(length(Nbvals)) # Arrays which will store the phi, phib and M solutions
         phib_vals = zeros(length(Nbvals))
         M_vals = zeros(length(Nbvals))
@@ -212,6 +212,8 @@ begin
         return Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals
     end
 end
+
+
 
 begin
     #aqui, preciso dar um jeito de achar o valor para qual o potencial começa a voltar
@@ -239,6 +241,21 @@ begin
     end
 end
 
+
+
+begin
+    Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(0.04)
+    firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
+    println("First curve:")
+    for i in 2:length(secondcurvex)
+        if secondcurvey[i] < secondcurvey[i-1]
+            println(secondcurvey[i])
+        end
+    end
+end
+
+
+
 begin
     function fofinder(T, chuteinit)
         Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(T)
@@ -256,9 +273,11 @@ begin
         diferenca(mu) = interp1(mu) - interp2(mu)
 
         mucritico = nlsolve(x -> [diferenca(x[1])], [chuteinit], method=:newton, ftol=1e-10, xtol=1e-10)
-        return mucritico.zero[1], interp2(mucritico.zero[1])
+        return mucritico.zero[1], interp2(mucritico.zero[1]), interp1, interp2
     end
 end
+
+
 
 begin
     Trange1 = range(0.01, 0.065, length=50)  # Replace with your desired range
@@ -270,6 +289,7 @@ begin
     end
     scatter(mucriticos, Trange1)
 end
+
 
 
 begin
@@ -293,6 +313,8 @@ begin
     title!("Potential vs μ (First and Second Curves) for Varying T")
 end
 
+
+
 begin
     Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(0.04)
     firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
@@ -302,3 +324,19 @@ begin
     scatter!(secondcurvex, secondcurvey, label="Second Curve", marker=:cross, color=:red)
     scatter!([mucrit], [potcric], label="Critical Point", marker=:star, color=:green, markersize=8)
 end
+
+
+
+begin
+    Nbvals, mu_vals, phi_vals, phib_vals, M_vals, potential_vals = Trange_density(0.04)
+    _,_,interp1, interp2 = fofinder(0.04, 0.4)
+    firstcurvex, firstcurvey, secondcurvex, secondcurvey = interpot(potential_vals, mu_vals)
+    xi = range(0.33,0.36, length=50)
+    y1 = [interp1(x) for x in xi]
+    y2 = [interp2(x) for x in xi]
+    plot(xi, y1, label="First Curve", xlabel="μ", ylabel="Potential", title="First Curve Interpolation", legend=false)
+    plot!(xi, y2, label="Second Curve", xlabel="μ", ylabel="Potential", title="Second Curve Interpolation", legend=false)
+    plot!(firstcurvex, firstcurvey)
+    plot!(secondcurvex, secondcurvey)
+end
+
